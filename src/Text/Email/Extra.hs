@@ -1,53 +1,59 @@
-{-# LANGUAGE CPP #-}
 {-# OPTIONS_GHC -Wno-orphans #-}
 module Text.Email.Extra
   ( validateEmail
   , emailToText
   ) where
 
-import           Control.Monad ((<=<))
-import           Data.ByteString (ByteString)
-import qualified Data.ByteString.Char8 as BSC
-import           Data.Text (Text)
-import           Data.Text as T (unpack)
-import           Data.Text.Encoding as T (decodeUtf8)
-import           Test.QuickCheck
-import           Text.Email.Validate (EmailAddress)
-import           Text.Email.Validate as Email
-  (domainPart, toByteString, unsafeEmailAddress, validate)
+import Control.Monad ((<=<))
+import Data.ByteString (ByteString)
+import qualified Data.ByteString.Char8 as ByteString
+import Data.Text (Text)
+import qualified Data.Text.Encoding as Text
+import Test.QuickCheck
+import Text.Email.Validate (EmailAddress)
+import qualified Text.Email.Validate as Email
 
-#ifndef ghcjs_HOST_OS
-import           Text.Regex.PCRE.Heavy (re, (=~))
-
+-- | Validate that the domain part in this email address is
+--   in fact a domain name.
+--   The old version of this function used the following regular expression
+--   to validate email domains:
+--   > domainRegex = [re|^[^.]+(?:\.[^.]+)*\.[^.]{2,}$|]
+--   It was rewritten without regex to make this library more portable and
+--   allow using it with GHCJS.
 validateEmailDomain :: EmailAddress -> Either String EmailAddress
-validateEmailDomain email =
-  if emailDomain =~ domainRegex
-    then Right email
-    else Left $ errorMessage <> (T.unpack $ T.decodeUtf8 emailDomain)
+validateEmailDomain email
+  | validDomain domain = Right email
+  | otherwise = Left ("email domain invalid: " <> ByteString.unpack domain)
   where
-    emailDomain = Email.domainPart email
-    domainRegex = [re|^[^.]+(?:\.[^.]+)*\.[^.]{2,}$|]
-    errorMessage = "email domain is not valid: " :: String
-#endif
+    domain = Email.domainPart email
+    validDomain dom
+      -- Split domain into chunks,
+      -- i.e. awesome.typeable.io -> [awesome typeable io]
+      | chunks <- ByteString.split '.' dom
+      -- Check that there are at least two chunks,
+      -- do not allow one word domains.
+      , length chunks >= 2
+      -- Check that there are no empty chunks. This would happen if the domain
+      -- starts or ends with '.' or has two or more dots next to one another.
+      , none (ByteString.null) chunks
+      -- Finally, check that the last chunk (TLD) is two or more
+      -- characters long, since there are no single-character top domains.
+      , ByteString.length (last chunks) >= 2 = True
+      | otherwise = False
 
 validateEmail :: ByteString -> Either String EmailAddress
-#ifndef ghcjs_HOST_OS
 validateEmail = validateEmailDomain <=< Email.validate
-#else
-validateEmail = error "validateEmail: unimplemented in GHCJS"
-#endif
 
 emailToText :: EmailAddress -> Text
-#ifndef ghcjs_HOST_OS
-emailToText = T.decodeUtf8 . toByteString
-#else
-emailToText = error "emailToText: unimplemented in GHCJS"
-#endif
+emailToText = Text.decodeUtf8 . Email.toByteString
+
+none :: Foldable t => (a -> Bool) -> t a -> Bool
+none f = not . any f
 
 instance Arbitrary EmailAddress where
   arbitrary = do
     s <- listOf1 (elements $ ['a'..'z'] <> ['A'..'Z'] <> ['0'..'9'])
-    return $ unsafeEmailAddress (BSC.pack s) "example.com"
+    return $ Email.unsafeEmailAddress (ByteString.pack s) "example.com"
   -- FIXME: write the correct instance
   -- arbitrary = do
   --   m <- elements [1..32]
