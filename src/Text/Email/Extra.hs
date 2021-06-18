@@ -53,7 +53,7 @@ none f = not . any f
 instance Arbitrary EmailAddress where
   arbitrary = do
     s <- take 64 <$> listOf1 (elements $ ['a'..'z'] <> ['A'..'Z'] <> ['0'..'9'])
-    return $ Email.unsafeEmailAddress (ByteString.pack s) "example.com"
+    return $ Email.unsafeEmailAddress (ByteString.pack s) "antorica.com"
   -- FIXME: write the correct instance
   -- arbitrary = do
   --   m <- elements [1..32]
