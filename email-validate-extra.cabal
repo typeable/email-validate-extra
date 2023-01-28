@@ -6,15 +6,42 @@ license-file:         LICENSE
 author:               typeable.io
 build-type:           Simple
 
+Flag postgres
+  Description: Add Postgresql instances to EmailAddress
+  Default:     False
+  Manual:      True
+
+Flag aeson
+  Description: Add JSON instances to EmailAddress
+  Default:     False
+  Manual:      True
+
+Flag arbitrary
+  Description: Add Arbitrary instances to EmailAddress
+  Default:     True
+  -- for backward compatibility ^
+  Manual:      True
+
 library
   hs-source-dirs:     src
   default-language:   Haskell2010
   default-extensions: OverloadedStrings
-  build-depends:      base >=4.10 && <5.0
-                    , bytestring
-                    , email-validate
-                    , text
-                    , QuickCheck
+  build-depends:    base >=4.10 && <5.0
+                  , bytestring
+                  , email-validate
+                  , text
+  if flag(arbitrary)
+    build-depends: QuickCheck
+    cpp-options: -DARBITRARY
+  if flag(postgres) && !impl(ghcjs)
+    build-depends:  postgresql-simple
+                  , case-insensitive
+
+    cpp-options: -DPOSTGRES
+  if flag(aeson)
+    build-depends: aeson
+    cpp-options: -DAESON
+
   exposed-modules:    Text.Email.Extra
 
 test-suite spec
