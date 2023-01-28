@@ -13,7 +13,7 @@ Flag postgres
 
 Flag aeson
   Description: Add JSON instances to EmailAddress
-  Default:     False
+  Default:     True
   Manual:      True
 
 Flag arbitrary
