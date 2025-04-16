@@ -9,18 +9,18 @@ build-type:           Simple
 Flag postgres
   Description: Add Postgresql instances to EmailAddress
   Default:     False
-  Manual:      True
+  Manual:      False
 
 Flag aeson
   Description: Add JSON instances to EmailAddress
   Default:     True
-  Manual:      True
+  Manual:      False
 
 Flag arbitrary
   Description: Add Arbitrary instances to EmailAddress
   Default:     True
   -- for backward compatibility ^
-  Manual:      True
+  Manual:      False
 
 library
   hs-source-dirs:     src
