@@ -1,5 +1,6 @@
 {-# OPTIONS_GHC -Wno-orphans #-}
 {-# LANGUAGE CPP #-}
+
 module Text.Email.Extra
   ( validateEmail
   , emailToText
@@ -23,6 +24,10 @@ import           Database.PostgreSQL.Simple.ToField   as PG
 #ifdef AESON
 import           Control.Monad
 import           Data.Aeson
+#endif
+#ifdef SCHEMA
+import Data.OpenApi
+import Data.Proxy
 #endif
 
 -- | Validate that the domain part in this email address is
@@ -104,4 +109,12 @@ instance ToJSON EmailAddress where
 
 instance FromJSON EmailAddress where
   parseJSON = parseJSON >=> either fail pure . validateEmail . Text.encodeUtf8
+#endif
+
+#ifdef SCHEMA
+instance ToSchema EmailAddress where
+  declareNamedSchema _ = declareNamedSchema (Proxy :: Proxy Text)
+
+instance ToParamSchema EmailAddress where
+  toParamSchema _ = toParamSchema (Proxy :: Proxy Text)
 #endif

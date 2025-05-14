@@ -16,6 +16,11 @@ Flag aeson
   Default:     True
   Manual:      False
 
+Flag schema
+  Description: Add openapi3 instances to EmailAddress
+  Default:     False
+  Manual:      False
+
 Flag arbitrary
   Description: Add Arbitrary instances to EmailAddress
   Default:     True
@@ -41,6 +46,9 @@ library
   if flag(aeson)
     build-depends: aeson
     cpp-options: -DAESON
+  if flag(schema)
+    build-depends: openapi3
+    cpp-options: -DSCHEMA
 
   exposed-modules:    Text.Email.Extra
 
